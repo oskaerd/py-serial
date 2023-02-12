@@ -13,8 +13,9 @@ class PySerial:
                 self.kill_session = True
                 break
 
-            command = bytes(command, encoding="utf-8")
-            print(f"Sending {command} command")
+            command = bytes(command, encoding="ascii")
+            print(f"Sending {command} command of length {len(command)}")
+            self.device.write(command)
         print("Killing input thread")
 
 
@@ -22,11 +23,12 @@ class PySerial:
         print("uart thread")
         # CMD input thread will close the program
         while not self.kill_session:
-            data = self.device.readline()
-            #print(data)
+            data = self.device.read(1)
+            if len(data) > 0:
+                print(data)
         print("Killing serial rx thread")
 
-    def __init__(self, port=None, baudrate=115200):
+    def __init__(self, port=None, baudrate=115200, timeout=1):
         self.kill_session = False
         ports = serial.tools.list_ports.comports()
         devices = []
@@ -42,7 +44,7 @@ class PySerial:
             else:
                 port = 0
 
-        self.device = serial.Serial(devices[int(port)][0], baudrate)
+        self.device = serial.Serial(devices[int(port)][0], baudrate, timeout=timeout)
 
     def __del__(self):
         # Close the connection once port is unused
